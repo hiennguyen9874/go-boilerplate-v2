@@ -1,6 +1,6 @@
 package responses
 
-import "github.com/hiennguyen9874/go-boilerplate/pkg/httpErrors"
+import "github.com/hiennguyen9874/go-boilerplate-v2/pkg/httpErrors"
 
 type Response[D any] struct {
 	Data      D                       `json:"data"`

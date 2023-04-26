@@ -9,17 +9,17 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
-	"github.com/hiennguyen9874/go-boilerplate/config"
-	"github.com/hiennguyen9874/go-boilerplate/internal/models"
-	"github.com/hiennguyen9874/go-boilerplate/internal/usecase"
-	"github.com/hiennguyen9874/go-boilerplate/internal/users"
-	"github.com/hiennguyen9874/go-boilerplate/internal/worker"
-	"github.com/hiennguyen9874/go-boilerplate/pkg/cryptpass"
-	"github.com/hiennguyen9874/go-boilerplate/pkg/emailTemplates"
-	"github.com/hiennguyen9874/go-boilerplate/pkg/httpErrors"
-	"github.com/hiennguyen9874/go-boilerplate/pkg/jwt"
-	"github.com/hiennguyen9874/go-boilerplate/pkg/logger"
-	"github.com/hiennguyen9874/go-boilerplate/pkg/secureRandom"
+	"github.com/hiennguyen9874/go-boilerplate-v2/config"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/models"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/usecase"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/users"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/worker"
+	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/cryptpass"
+	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/emailTemplates"
+	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/httpErrors"
+	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/jwt"
+	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/logger"
+	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/secureRandom"
 )
 
 type userUseCase struct {

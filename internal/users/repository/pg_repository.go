@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/hiennguyen9874/go-boilerplate/internal/models"
-	"github.com/hiennguyen9874/go-boilerplate/internal/repository"
-	"github.com/hiennguyen9874/go-boilerplate/internal/users"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/models"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/repository"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/users"
 	"gorm.io/gorm"
 )
 

@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/hiennguyen9874/go-boilerplate/internal"
-	"github.com/hiennguyen9874/go-boilerplate/internal/models"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/models"
 )
 
 type UserPgRepository interface {

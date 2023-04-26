@@ -6,10 +6,10 @@ import (
 	"fmt"
 
 	"github.com/hibiken/asynq"
-	"github.com/hiennguyen9874/go-boilerplate/config"
-	"github.com/hiennguyen9874/go-boilerplate/internal/distributor"
-	"github.com/hiennguyen9874/go-boilerplate/internal/users"
-	"github.com/hiennguyen9874/go-boilerplate/pkg/logger"
+	"github.com/hiennguyen9874/go-boilerplate-v2/config"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/distributor"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/users"
+	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/logger"
 )
 
 type userRedisTaskDistributor struct {

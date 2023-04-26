@@ -1,4 +1,4 @@
-module github.com/hiennguyen9874/go-boilerplate
+module github.com/hiennguyen9874/go-boilerplate-v2
 
 go 1.20
 
@@ -9,6 +9,7 @@ require (
 	github.com/go-playground/validator/v10 v10.11.2
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/google/uuid v1.3.0
+	github.com/hibiken/asynq v0.24.0
 	github.com/matcornic/hermes/v2 v2.1.0
 	github.com/redis/go-redis/v9 v9.0.2
 	github.com/spf13/cobra v1.6.1
@@ -43,7 +44,6 @@ require (
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
-	github.com/hibiken/asynq v0.24.0 // indirect
 	github.com/huandu/xstrings v1.4.0 // indirect
 	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
