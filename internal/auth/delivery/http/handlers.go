@@ -5,16 +5,16 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
-	"github.com/hiennguyen9874/go-boilerplate/config"
-	"github.com/hiennguyen9874/go-boilerplate/internal/auth"
-	"github.com/hiennguyen9874/go-boilerplate/internal/middleware"
-	"github.com/hiennguyen9874/go-boilerplate/internal/users"
-	"github.com/hiennguyen9874/go-boilerplate/internal/users/presenter"
-	"github.com/hiennguyen9874/go-boilerplate/pkg/httpErrors"
-	"github.com/hiennguyen9874/go-boilerplate/pkg/jwt"
-	"github.com/hiennguyen9874/go-boilerplate/pkg/logger"
-	"github.com/hiennguyen9874/go-boilerplate/pkg/responses"
-	"github.com/hiennguyen9874/go-boilerplate/pkg/utils"
+	"github.com/hiennguyen9874/go-boilerplate-v2/config"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/auth"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/middleware"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/users"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/users/presenter"
+	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/httpErrors"
+	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/jwt"
+	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/logger"
+	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/responses"
+	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/utils"
 )
 
 type authHandler struct {

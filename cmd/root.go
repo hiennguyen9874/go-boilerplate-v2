@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/hiennguyen9874/go-boilerplate/config"
+	"github.com/hiennguyen9874/go-boilerplate-v2/config"
 	"github.com/spf13/cobra"
 )
 

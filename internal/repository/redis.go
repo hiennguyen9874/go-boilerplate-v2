@@ -6,8 +6,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/hiennguyen9874/go-boilerplate/internal"
-	"github.com/hiennguyen9874/go-boilerplate/pkg/httpErrors"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal"
+	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/httpErrors"
 	"github.com/redis/go-redis/v9"
 )
 

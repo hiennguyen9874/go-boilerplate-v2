@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/hibiken/asynq"
-	"github.com/hiennguyen9874/go-boilerplate/config"
-	"github.com/hiennguyen9874/go-boilerplate/pkg/logger"
+	"github.com/hiennguyen9874/go-boilerplate-v2/config"
+	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/logger"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )

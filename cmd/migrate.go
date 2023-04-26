@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	"github.com/hiennguyen9874/go-boilerplate/config"
-	"github.com/hiennguyen9874/go-boilerplate/internal/models"
-	"github.com/hiennguyen9874/go-boilerplate/pkg/db/postgres"
-	"github.com/hiennguyen9874/go-boilerplate/pkg/logger"
+	"github.com/hiennguyen9874/go-boilerplate-v2/config"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/models"
+	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/db/postgres"
+	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/logger"
 	"github.com/spf13/cobra"
 	"gorm.io/gorm"
 )

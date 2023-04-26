@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/hiennguyen9874/go-boilerplate/internal/items"
-	"github.com/hiennguyen9874/go-boilerplate/internal/models"
-	"github.com/hiennguyen9874/go-boilerplate/internal/repository"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/items"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/models"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/repository"
 	"gorm.io/gorm"
 )
 

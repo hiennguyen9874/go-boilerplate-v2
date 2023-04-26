@@ -2,8 +2,8 @@ package http
 
 import (
 	"github.com/go-chi/chi/v5"
-	"github.com/hiennguyen9874/go-boilerplate/internal/items"
-	"github.com/hiennguyen9874/go-boilerplate/internal/middleware"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/items"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/middleware"
 )
 
 func MapItemRoute(router *chi.Mux, h items.Handlers, mw *middleware.MiddlewareManager) {

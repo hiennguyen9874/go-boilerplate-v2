@@ -4,11 +4,11 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/hiennguyen9874/go-boilerplate/config"
-	"github.com/hiennguyen9874/go-boilerplate/internal/items"
-	"github.com/hiennguyen9874/go-boilerplate/internal/models"
-	"github.com/hiennguyen9874/go-boilerplate/internal/usecase"
-	"github.com/hiennguyen9874/go-boilerplate/pkg/logger"
+	"github.com/hiennguyen9874/go-boilerplate-v2/config"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/items"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/models"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/usecase"
+	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/logger"
 )
 
 type itemUseCase struct {

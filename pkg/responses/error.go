@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
-	"github.com/hiennguyen9874/go-boilerplate/pkg/httpErrors"
+	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/httpErrors"
 )
 
 // render.Renderer Render() interface method

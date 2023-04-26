@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/hiennguyen9874/go-boilerplate/internal"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal"
 	"gorm.io/gorm"
 )
 
