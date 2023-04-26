@@ -1,0 +1,24 @@
+FROM golang:1.20-alpine as builder
+
+ENV GO111MODULE=on CGO_ENABLED=0
+
+WORKDIR /app
+
+RUN go install github.com/roerohan/wait-for-it@v0.2.13
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY ./ .
+
+RUN go build -ldflags "-s -w" -o /app/go-boilerplate
+
+FROM golang:1.20-alpine as runtime
+
+WORKDIR /app
+
+COPY --from=builder /app/go-boilerplate /app/go-boilerplate
+COPY --from=builder /go/bin/wait-for-it /go/wait-for-it
+
+RUN mkdir config
+COPY ./config/config.default.yml /app/config/

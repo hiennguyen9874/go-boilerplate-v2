@@ -1,0 +1,116 @@
+name: Release beta version
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: |
+          !!! ONLY DISPATCH ON DEVELOP BRANCH !!!
+          Version to release (Ex: `v0.0.1-beta.1`)
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  commit_new_version:
+    if: contains(github.ref, 'develop')
+
+    permissions:
+      contents: write
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Change version file
+        run: |
+          python3 scripts/update_version.py ${{ inputs.version }}
+        shell: bash
+
+      - name: Commit versioning
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "[Github Action] Change version -> ${{ inputs.version }}"
+
+  build:
+    needs: commit_new_version
+
+    permissions:
+      contents: read
+      packages: write
+
+    runs-on: ubuntu-latest
+
+    outputs:
+      docker_tags: ${{ steps.output.outputs.docker_tags }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,priority=200,prefix=,suffix=,value=${{ inputs.version }}
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: Dockerfile.prod
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+
+      - name: Output variable
+        id: output
+        run: |
+          echo "docker_tags=${{ join(fromJSON(steps.meta.outputs.json).tags, ', ') }}" >> "$GITHUB_OUTPUT"
+
+  publish_release:
+    needs: build
+
+    permissions:
+      # write permission is required to create a github release
+      contents: write
+      # write permission is required for autolabeler
+      # otherwise, read permission is required at least
+
+      pull-requests: read
+
+    runs-on: ubuntu-latest
+
+    outputs:
+      html_url: ${{ steps.output.outputs.html_url }}
+
+    steps:
+      - id: release_drafter
+        uses: release-drafter/release-drafter@v5
+        with:
+          version: ${{ inputs.version }}
+          name: ${{ inputs.version }}
+          tag: ${{ inputs.version }}
+          publish: false
+          disable-releaser: false
+          disable-autolabeler: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Output variable
+        id: output
+        run: |
+          echo "html_url=${{ steps.release_drafter.outputs.html_url }}" >> "$GITHUB_OUTPUT"

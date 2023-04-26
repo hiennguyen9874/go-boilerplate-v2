@@ -1,0 +1,125 @@
+name: Build dev and create tag version
+
+on:
+  push:
+    branches:
+      - "develop"
+
+env:
+  TIMEZONE: Asia/Ho_Chi_Minh
+
+jobs:
+  gen_version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.gen_version.outputs.version }}
+    steps:
+      - id: gen_version
+        name: Gen new version
+        run: |
+          TODAY=$(TZ=":${{ env.TIMEZONE }}" date +"%Y%m%d.%H%M%S")
+          echo "version=$TODAY.dev" >> $GITHUB_OUTPUT
+
+  commit_new_version:
+    needs: gen_version
+
+    permissions:
+      contents: write
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Change version file
+        run: |
+          python3 scripts/update_version.py ${{ needs.gen_version.outputs.version }}
+        shell: bash
+
+      - name: Commit versioning
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "[Github Action] Change version -> ${{ needs.gen_version.outputs.version }}"
+          branch: ${{ github.ref }}
+
+  build:
+    needs: [gen_version, commit_new_version]
+
+    permissions:
+      contents: read
+      packages: write
+
+    runs-on: ubuntu-latest
+
+    outputs:
+      docker_tags: ${{ steps.output.outputs.docker_tags }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,priority=200,prefix=,suffix=,value=${{ needs.gen_version.outputs.version }}
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: Dockerfile.dev
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+
+      - name: Output variable
+        id: output
+        run: |
+          echo "docker_tags=${{ join(fromJSON(steps.meta.outputs.json).tags, ', ') }}" >> "$GITHUB_OUTPUT"
+
+  tag:
+    needs: [gen_version, build]
+
+    permissions:
+      contents: write
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.ref }}
+
+      - id: "tag_create"
+        name: Create tag
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const refRes = await github.rest.git.getRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'heads/${{ github.ref_name }}',
+            });
+
+            await github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'refs/tags/${{ needs.gen_version.outputs.version }}',
+              sha: refRes['data']['object']['sha'],
+            });

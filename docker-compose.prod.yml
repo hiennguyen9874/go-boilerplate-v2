@@ -1,0 +1,87 @@
+version: "3.8"
+
+services:
+  backend:
+    image: go-boilerplate:${SERVER_APP_VERSION}
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    command: sh -c "/go/wait-for-it -w db:5432 -w redis:6379 -- /app/go-boilerplate migrate && /app/go-boilerplate initdata && /app/go-boilerplate serve"
+    ports:
+      - ${SERVER_PORT}:${SERVER_PORT}
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - ${COMPOSE_ENV_FILE}
+
+  worker:
+    image: go-boilerplate:${SERVER_APP_VERSION}
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    command: sh -c "/go/wait-for-it -w db:5432 -w redis:6379 -- sleep 10; /app/go-boilerplate worker"
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - ${COMPOSE_ENV_FILE}
+
+  db:
+    image: postgres:15.2-alpine
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DBNAME}
+    expose:
+      - 5432
+    volumes:
+      - app-postgres-data:/var/lib/postgresql/data/
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    expose:
+      - 6579
+    volumes:
+      - app-redis-data:/data
+    restart: unless-stopped
+  # redisinsight:
+  #   image: redislabs/redisinsight:1.13.1
+  #   ports:
+  #     - 8001:8001
+  #   volumes:
+  #     - app-redisinsight-data:/db
+  #   depends_on:
+  #     - redis
+
+  # redis:
+  #   image: redis/redis-stack:7.0.0-RC4
+  #   expose:
+  #     - 6379
+  #   volumes:
+  #     - app-redis-data:/data
+  #   ports:
+  #     - 8001:8001
+  #   restart: unless-stopped
+
+  # pgadmin:
+  #   image: dpage/pgadmin4
+  #   depends_on:
+  #     - db
+  #   expose:
+  #     - 5050
+  #   ports:
+  #     - 5050:5050
+  #   environment:
+  #     - PGADMIN_LISTEN_PORT=5050
+  #     - PGADMIN_DEFAULT_EMAIL=admin@gmail.com
+  #     - PGADMIN_DEFAULT_PASSWORD=admin
+  #   volumes:
+  #     - app-pgadmin-data:/var/lib/pgadmin
+  #   restart: unless-stopped
+
+volumes:
+  app-postgres-data:
+  app-redisinsight-data:
+  app-redis-data: # app-pgadmin-data:

@@ -1,0 +1,12 @@
+{
+  "configurations": [
+    {
+      "name": "main.go serve",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/main.go",
+      "args": ["serve"]
+    }
+  ]
+}

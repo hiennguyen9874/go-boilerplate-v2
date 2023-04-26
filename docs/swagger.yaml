@@ -1,0 +1,1070 @@
+basePath: /api
+definitions:
+  httpErrors.ErrResponse:
+    properties:
+      msg:
+        description: application-level error message, for debugging
+        example: not found user
+        type: string
+      status:
+        description: http response status code
+        example: 404
+        type: integer
+      statusText:
+        description: user-level status message
+        example: not_found
+        type: string
+    type: object
+  presenter.ForgotPassword:
+    properties:
+      email:
+        example: hiennguyen9874@gmail.com
+        type: string
+    required:
+    - email
+    type: object
+  presenter.ItemCreate:
+    properties:
+      description:
+        example: item description
+        type: string
+      title:
+        example: item title
+        type: string
+    required:
+    - description
+    - title
+    type: object
+  presenter.ItemResponse:
+    properties:
+      description:
+        type: string
+      id:
+        type: string
+      owner_id:
+        type: string
+      title:
+        type: string
+    type: object
+  presenter.ItemUpdate:
+    properties:
+      description:
+        example: item description
+        type: string
+      title:
+        example: item title
+        type: string
+    type: object
+  presenter.PublicKey:
+    properties:
+      public_key_access_token:
+        type: string
+      public_key_refresh_token:
+        type: string
+    type: object
+  presenter.ResetPassword:
+    properties:
+      confirm_password:
+        example: password
+        minLength: 8
+        type: string
+      new_password:
+        example: password
+        minLength: 8
+        type: string
+    required:
+    - confirm_password
+    - new_password
+    type: object
+  presenter.Token:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+      token_type:
+        type: string
+    type: object
+  presenter.UserCreate:
+    properties:
+      confirm_password:
+        example: password
+        minLength: 8
+        type: string
+      email:
+        example: hiennguyen9874@gmail.com
+        type: string
+      name:
+        example: Xuan Hien
+        type: string
+      password:
+        example: password
+        minLength: 8
+        type: string
+    required:
+    - confirm_password
+    - email
+    - name
+    - password
+    type: object
+  presenter.UserResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      is_superuser:
+        type: boolean
+      name:
+        type: string
+      updated_at:
+        type: string
+      verified:
+        type: boolean
+    type: object
+  presenter.UserUpdate:
+    properties:
+      name:
+        example: Xuan Hien
+        type: string
+    type: object
+  presenter.UserUpdatePassword:
+    properties:
+      confirm_password:
+        example: password
+        minLength: 8
+        type: string
+      new_password:
+        example: password
+        minLength: 8
+        type: string
+      old_password:
+        example: old_password
+        minLength: 8
+        type: string
+    required:
+    - confirm_password
+    - new_password
+    - old_password
+    type: object
+  responses.ErrorResponse:
+    properties:
+      error:
+        $ref: '#/definitions/httpErrors.ErrResponse'
+      is_success:
+        example: false
+        type: boolean
+    type: object
+  responses.SuccessResponse-array_presenter_ItemResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/presenter.ItemResponse'
+        type: array
+      is_success:
+        example: true
+        type: boolean
+    type: object
+  responses.SuccessResponse-array_presenter_UserResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/presenter.UserResponse'
+        type: array
+      is_success:
+        example: true
+        type: boolean
+    type: object
+  responses.SuccessResponse-presenter_ItemResponse:
+    properties:
+      data:
+        $ref: '#/definitions/presenter.ItemResponse'
+      is_success:
+        example: true
+        type: boolean
+    type: object
+  responses.SuccessResponse-presenter_UserResponse:
+    properties:
+      data:
+        $ref: '#/definitions/presenter.UserResponse'
+      is_success:
+        example: true
+        type: boolean
+    type: object
+info:
+  contact: {}
+  title: Go boilerplate
+  version: "1.0"
+paths:
+  /auth/forgotpassword:
+    post:
+      consumes:
+      - application/json
+      description: Forgot password, code will send to email.
+      parameters:
+      - description: Forgot Password
+        in: body
+        name: forgotPassword
+        required: true
+        schema:
+          $ref: '#/definitions/presenter.ForgotPassword'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      summary: Forgot password
+      tags:
+      - auth
+  /auth/login:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Sign in, get access token for future requests.
+      parameters:
+      - description: email
+        in: formData
+        name: username
+        required: true
+        type: string
+      - description: password
+        in: formData
+        name: password
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/presenter.Token'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      summary: Sign In
+      tags:
+      - auth
+  /auth/logout:
+    get:
+      consumes:
+      - application/json
+      description: Logout, remove current refresh token in db.
+      parameters:
+      - description: Authentication header
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      summary: Logout
+      tags:
+      - auth
+  /auth/logoutall:
+    get:
+      consumes:
+      - application/json
+      description: Logout all session of this user.
+      parameters:
+      - description: Authentication header
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      summary: Logout all session
+      tags:
+      - auth
+  /auth/publickey:
+    get:
+      consumes:
+      - application/json
+      description: Get rsa public key to decode token.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/presenter.PublicKey'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      summary: Get public key
+      tags:
+      - auth
+  /auth/refresh:
+    get:
+      consumes:
+      - application/json
+      description: Get new access token from refresh token.
+      parameters:
+      - description: Authentication header
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/presenter.Token'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      summary: Refresh token
+      tags:
+      - auth
+  /auth/resetpassword:
+    patch:
+      consumes:
+      - application/json
+      description: Reset Password, using code from email.
+      parameters:
+      - description: code
+        format: code
+        in: query
+        name: code
+        required: true
+        type: string
+      - description: Reset Password
+        in: body
+        name: resetPassword
+        required: true
+        schema:
+          $ref: '#/definitions/presenter.ResetPassword'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      summary: Reset Password
+      tags:
+      - auth
+  /auth/verifyemail:
+    get:
+      consumes:
+      - application/json
+      description: Verify user using code from email.
+      parameters:
+      - description: offset
+        format: code
+        in: query
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      summary: Verify user
+      tags:
+      - auth
+  /item:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve items.
+      parameters:
+      - description: limit
+        format: limit
+        in: query
+        name: limit
+        type: integer
+      - description: offset
+        format: offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.SuccessResponse-array_presenter_ItemResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      security:
+      - OAuth2Password: []
+      summary: Read Items
+      tags:
+      - items
+    post:
+      consumes:
+      - application/json
+      description: Create new item.
+      parameters:
+      - description: Add item
+        in: body
+        name: item
+        required: true
+        schema:
+          $ref: '#/definitions/presenter.ItemCreate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.SuccessResponse-presenter_ItemResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      security:
+      - OAuth2Password: []
+      summary: Create Item
+      tags:
+      - items
+  /item/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an item by ID.
+      parameters:
+      - description: Item Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.SuccessResponse-presenter_ItemResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      security:
+      - OAuth2Password: []
+      summary: Delete item
+      tags:
+      - items
+    get:
+      consumes:
+      - application/json
+      description: Get item by ID.
+      parameters:
+      - description: Item Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.SuccessResponse-presenter_ItemResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      security:
+      - OAuth2Password: []
+      summary: Read item
+      tags:
+      - items
+    put:
+      consumes:
+      - application/json
+      description: Update an item by ID.
+      parameters:
+      - description: Item Id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update item
+        in: body
+        name: item
+        required: true
+        schema:
+          $ref: '#/definitions/presenter.ItemUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.SuccessResponse-presenter_ItemResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      security:
+      - OAuth2Password: []
+      summary: Update item
+      tags:
+      - items
+  /user:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve users.
+      parameters:
+      - description: limit
+        format: limit
+        in: query
+        name: limit
+        type: integer
+      - description: offset
+        format: offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.SuccessResponse-array_presenter_UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      security:
+      - OAuth2Password: []
+      summary: Read Users
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      description: Create new user.
+      parameters:
+      - description: Add user
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/presenter.UserCreate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.SuccessResponse-presenter_UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      security:
+      - OAuth2Password: []
+      summary: Create User
+      tags:
+      - users
+  /user/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an user by ID.
+      parameters:
+      - description: User Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.SuccessResponse-presenter_UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      security:
+      - OAuth2Password: []
+      summary: Delete user
+      tags:
+      - users
+    get:
+      consumes:
+      - application/json
+      description: Get user by ID.
+      parameters:
+      - description: User Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.SuccessResponse-presenter_UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      security:
+      - OAuth2Password: []
+      summary: Read user
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Update an user by ID.
+      parameters:
+      - description: User Id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update user
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/presenter.UserUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.SuccessResponse-presenter_UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      security:
+      - OAuth2Password: []
+      summary: Update user
+      tags:
+      - users
+  /user/{id}/logoutall:
+    get:
+      consumes:
+      - application/json
+      description: Logout all session of user with id.
+      parameters:
+      - description: User Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      security:
+      - OAuth2Password: []
+      summary: Logout all of user
+      tags:
+      - users
+  /user/{id}/updatepass:
+    patch:
+      consumes:
+      - application/json
+      description: Update password user by ID.
+      parameters:
+      - description: User Id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update user
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/presenter.UserUpdatePassword'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.SuccessResponse-presenter_UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      security:
+      - OAuth2Password: []
+      summary: Update password user
+      tags:
+      - users
+  /user/me:
+    get:
+      consumes:
+      - application/json
+      description: Get user me.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.SuccessResponse-presenter_UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      security:
+      - OAuth2Password: []
+      summary: Read user me
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Update user me.
+      parameters:
+      - description: Update user
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/presenter.UserUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.SuccessResponse-presenter_UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      security:
+      - OAuth2Password: []
+      summary: Update user me
+      tags:
+      - users
+  /user/me/updatepass:
+    patch:
+      consumes:
+      - application/json
+      description: Update password user me.
+      parameters:
+      - description: Update user
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/presenter.UserUpdatePassword'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.SuccessResponse-presenter_UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/responses.ErrorResponse'
+      security:
+      - OAuth2Password: []
+      summary: Update password user me
+      tags:
+      - users
+securityDefinitions:
+  OAuth2Password:
+    flow: password
+    tokenUrl: /api/auth/login
+    type: oauth2
+swagger: "2.0"
