@@ -2,8 +2,8 @@ package http
 
 import (
 	"github.com/go-chi/chi/v5"
-	"github.com/hiennguyen9874/go-boilerplate/internal/auth"
-	"github.com/hiennguyen9874/go-boilerplate/internal/middleware"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/auth"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/middleware"
 )
 
 func MapAuthRoute(router *chi.Mux, h auth.Handlers, mw *middleware.MiddlewareManager) {

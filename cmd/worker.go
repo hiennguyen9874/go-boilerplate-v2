@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"github.com/hiennguyen9874/go-boilerplate/config"
-	"github.com/hiennguyen9874/go-boilerplate/internal/worker"
-	"github.com/hiennguyen9874/go-boilerplate/pkg/logger"
+	"github.com/hiennguyen9874/go-boilerplate-v2/config"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/worker"
+	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/logger"
 	"github.com/spf13/cobra"
 )
 

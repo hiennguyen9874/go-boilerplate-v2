@@ -3,38 +3,54 @@ package usecase
 import (
 	"context"
 
-	"github.com/google/uuid"
-	"github.com/hiennguyen9874/go-boilerplate/config"
-	"github.com/hiennguyen9874/go-boilerplate/internal/items"
-	"github.com/hiennguyen9874/go-boilerplate/internal/models"
-	"github.com/hiennguyen9874/go-boilerplate/internal/usecase"
-	"github.com/hiennguyen9874/go-boilerplate/pkg/logger"
+	"github.com/hiennguyen9874/go-boilerplate-v2/config"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/items"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/models"
+	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/logger"
 )
 
 type itemUseCase struct {
-	usecase.UseCase[models.Item]
 	pgRepo items.ItemPgRepository
+	cfg    *config.Config
+	logger logger.Logger
 }
 
-func CreateItemUseCaseI(
+func CreateItemUseCase(
 	pgRepo items.ItemPgRepository,
 	cfg *config.Config,
 	logger logger.Logger,
-) items.ItemUseCaseI {
+) items.ItemUseCase {
 	return &itemUseCase{
-		UseCase: usecase.CreateUseCase[models.Item](pgRepo, cfg, logger),
-		pgRepo:  pgRepo,
+		pgRepo: pgRepo,
+		cfg:    cfg,
+		logger: logger,
 	}
 }
 
-func (u *itemUseCase) GetMultiByOwnerId(ctx context.Context, ownerId uuid.UUID, limit, offset int) ([]*models.Item, error) {
+func (u *itemUseCase) CreateWithOwner(ctx context.Context, ownerId uint, obj_create *models.ItemCreate) (*models.Item, error) {
+	return u.pgRepo.CreateWithOwner(ctx, ownerId, obj_create)
+}
+
+func (u *itemUseCase) Get(ctx context.Context, id uint) (*models.Item, error) {
+	return u.pgRepo.Get(ctx, id)
+}
+
+func (u *itemUseCase) GetMulti(ctx context.Context, offset, limit int) ([]*models.Item, error) {
+	return u.pgRepo.GetMulti(ctx, offset, limit)
+}
+
+func (u *itemUseCase) Delete(ctx context.Context, id uint) (*models.Item, error) {
+	return u.pgRepo.Delete(ctx, id)
+}
+
+func (u *itemUseCase) Update(ctx context.Context, id uint, obj_update *models.ItemUpdate) (*models.Item, error) {
+	return u.pgRepo.Update(ctx, id, obj_update)
+}
+
+func (u *itemUseCase) GetMultiByOwnerId(ctx context.Context, ownerId uint, limit, offset int) ([]*models.Item, error) {
 	return u.pgRepo.GetMultiByOwnerId(ctx, ownerId, limit, offset)
 }
 
-func (u *itemUseCase) CreateWithOwner(ctx context.Context, ownerId uuid.UUID, exp *models.Item) (*models.Item, error) {
-	return u.pgRepo.CreateWithOwner(ctx, ownerId, exp)
-}
-
-func (u *itemUseCase) DeleteWithoutGet(ctx context.Context, id uuid.UUID) error {
+func (u *itemUseCase) DeleteWithoutGet(ctx context.Context, id uint) error {
 	return u.pgRepo.DeleteWithoutGet(ctx, id)
 }

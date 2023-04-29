@@ -5,12 +5,12 @@ import (
 	"fmt"
 
 	"github.com/hibiken/asynq"
-	"github.com/hiennguyen9874/go-boilerplate/config"
+	"github.com/hiennguyen9874/go-boilerplate-v2/config"
 
-	"github.com/hiennguyen9874/go-boilerplate/internal/users"
-	userProcessor "github.com/hiennguyen9874/go-boilerplate/internal/users/processor"
-	"github.com/hiennguyen9874/go-boilerplate/pkg/logger"
-	"github.com/hiennguyen9874/go-boilerplate/pkg/sendEmail"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/users"
+	userProcessor "github.com/hiennguyen9874/go-boilerplate-v2/internal/users/processor"
+	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/logger"
+	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/sendEmail"
 )
 
 const (

@@ -6,11 +6,11 @@ import (
 	"fmt"
 
 	"github.com/hibiken/asynq"
-	"github.com/hiennguyen9874/go-boilerplate/config"
-	"github.com/hiennguyen9874/go-boilerplate/internal/processor"
-	"github.com/hiennguyen9874/go-boilerplate/internal/users"
-	"github.com/hiennguyen9874/go-boilerplate/pkg/logger"
-	"github.com/hiennguyen9874/go-boilerplate/pkg/sendEmail"
+	"github.com/hiennguyen9874/go-boilerplate-v2/config"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/processor"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/users"
+	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/logger"
+	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/sendEmail"
 )
 
 type userRedisTaskProcessor struct {

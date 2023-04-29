@@ -5,25 +5,25 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
-	"github.com/hiennguyen9874/go-boilerplate/config"
-	"github.com/hiennguyen9874/go-boilerplate/internal/auth"
-	"github.com/hiennguyen9874/go-boilerplate/internal/middleware"
-	"github.com/hiennguyen9874/go-boilerplate/internal/users"
-	"github.com/hiennguyen9874/go-boilerplate/internal/users/presenter"
-	"github.com/hiennguyen9874/go-boilerplate/pkg/httpErrors"
-	"github.com/hiennguyen9874/go-boilerplate/pkg/jwt"
-	"github.com/hiennguyen9874/go-boilerplate/pkg/logger"
-	"github.com/hiennguyen9874/go-boilerplate/pkg/responses"
-	"github.com/hiennguyen9874/go-boilerplate/pkg/utils"
+	"github.com/hiennguyen9874/go-boilerplate-v2/config"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/auth"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/middleware"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/users"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/users/presenter"
+	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/httpErrors"
+	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/jwt"
+	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/logger"
+	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/responses"
+	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/utils"
 )
 
 type authHandler struct {
 	cfg     *config.Config
-	usersUC users.UserUseCaseI
+	usersUC users.UserUseCase
 	logger  logger.Logger
 }
 
-func CreateAuthHandler(uc users.UserUseCaseI, cfg *config.Config, logger logger.Logger) auth.Handlers {
+func CreateAuthHandler(uc users.UserUseCase, cfg *config.Config, logger logger.Logger) auth.Handlers {
 	return &authHandler{cfg: cfg, usersUC: uc, logger: logger}
 }
 
@@ -175,13 +175,7 @@ func (h *authHandler) LogoutAllToken() func(w http.ResponseWriter, r *http.Reque
 
 		refreshToken := middleware.TokenFromHeader(r)
 
-		id, err := h.usersUC.ParseIdFromRefreshToken(ctx, refreshToken)
-		if err != nil {
-			render.Render(w, r, responses.CreateErrorResponse(err)) //nolint:errcheck
-			return
-		}
-
-		err = h.usersUC.LogoutAll(ctx, id)
+		err := h.usersUC.LogoutAllWithToken(ctx, refreshToken)
 		if err != nil {
 			render.Render(w, r, responses.CreateErrorResponse(err)) //nolint:errcheck
 			return

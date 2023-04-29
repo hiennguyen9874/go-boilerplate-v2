@@ -5,9 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 
-	"gorm.io/gorm"
+	"github.com/hiennguyen9874/go-boilerplate-v2/ent"
 )
 
 var (
@@ -233,34 +232,14 @@ func ErrUserNotVerified(err error) ErrRest {
 // Parser of error string messages ,returns RestError
 func ParseErrors(err error) ErrRest {
 	switch {
-	case errors.Is(err, gorm.ErrRecordNotFound):
+	case ent.IsNotFound(err):
 		return ErrNotFound(err)
 	case errors.Is(err, context.DeadlineExceeded):
 		return ErrRequestTimeoutError(err)
-	case strings.Contains(err.Error(), "SQLSTATE"):
-		return parseSqlErrors(err)
 	default:
 		if restErr, ok := err.(ErrRest); ok {
 			return restErr
 		}
 		return ErrBadRequest(err)
-	}
-}
-
-// Parser sql error, returns RestError
-func parseSqlErrors(err error) ErrRest {
-	if strings.Contains(err.Error(), "23505") {
-		return &ErrResponse{
-			Err:        err,
-			Status:     http.StatusBadRequest,
-			StatusText: ErrorExistsEmailError.Error(),
-			Msg:        err.Error(),
-		}
-	}
-	return &ErrResponse{
-		Err:        err,
-		Status:     http.StatusBadRequest,
-		StatusText: ErrorBadRequest.Error(),
-		Msg:        err.Error(),
 	}
 }

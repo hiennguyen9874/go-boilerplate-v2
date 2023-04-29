@@ -2,8 +2,8 @@ package processor
 
 import (
 	"github.com/hibiken/asynq"
-	"github.com/hiennguyen9874/go-boilerplate/config"
-	"github.com/hiennguyen9874/go-boilerplate/pkg/logger"
+	"github.com/hiennguyen9874/go-boilerplate-v2/config"
+	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/logger"
 )
 
 type RedisTaskProcessor struct {

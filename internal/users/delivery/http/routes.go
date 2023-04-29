@@ -2,8 +2,8 @@ package http
 
 import (
 	"github.com/go-chi/chi/v5"
-	"github.com/hiennguyen9874/go-boilerplate/internal/middleware"
-	"github.com/hiennguyen9874/go-boilerplate/internal/users"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/middleware"
+	"github.com/hiennguyen9874/go-boilerplate-v2/internal/users"
 )
 
 func MapUserRoute(router *chi.Mux, h users.Handlers, mw *middleware.MiddlewareManager) {

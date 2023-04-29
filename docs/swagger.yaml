@@ -40,9 +40,9 @@ definitions:
       description:
         type: string
       id:
-        type: string
+        type: integer
       owner_id:
-        type: string
+        type: integer
       title:
         type: string
     type: object
@@ -109,19 +109,19 @@ definitions:
     type: object
   presenter.UserResponse:
     properties:
-      created_at:
+      create_time:
         type: string
       email:
         type: string
       id:
-        type: string
+        type: integer
       is_active:
         type: boolean
       is_superuser:
         type: boolean
       name:
         type: string
-      updated_at:
+      update_time:
         type: string
       verified:
         type: boolean
