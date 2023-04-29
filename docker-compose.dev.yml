@@ -1,7 +1,7 @@
 version: "3.8"
 
 services:
-  backend:
+  api:
     build:
       context: .
       dockerfile: Dockerfile.dev
@@ -26,6 +26,7 @@ services:
     depends_on:
       - db
       - redis
+      - api
     env_file:
       - ${COMPOSE_ENV_FILE}
 
