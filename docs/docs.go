@@ -1405,10 +1405,10 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "owner_id": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "title": {
                     "type": "string"
@@ -1504,14 +1504,14 @@ const docTemplate = `{
         "presenter.UserResponse": {
             "type": "object",
             "properties": {
-                "created_at": {
+                "create_time": {
                     "type": "string"
                 },
                 "email": {
                     "type": "string"
                 },
                 "id": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "is_active": {
                     "type": "boolean"
@@ -1522,7 +1522,7 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "updated_at": {
+                "update_time": {
                     "type": "string"
                 },
                 "verified": {

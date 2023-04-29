@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
-	"github.com/google/uuid"
 	"github.com/hiennguyen9874/go-boilerplate-v2/config"
 	"github.com/hiennguyen9874/go-boilerplate-v2/internal/middleware"
 	"github.com/hiennguyen9874/go-boilerplate-v2/internal/models"
@@ -21,11 +20,11 @@ import (
 
 type userHandler struct {
 	cfg     *config.Config
-	usersUC users.UserUseCaseI
+	usersUC users.UserUseCase
 	logger  logger.Logger
 }
 
-func CreateUserHandler(uc users.UserUseCaseI, cfg *config.Config, logger logger.Logger) users.Handlers {
+func CreateUserHandler(uc users.UserUseCase, cfg *config.Config, logger logger.Logger) users.Handlers {
 	return &userHandler{cfg: cfg, usersUC: uc, logger: logger}
 }
 
@@ -58,9 +57,13 @@ func (h *userHandler) Create() func(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		newUser, err := h.usersUC.CreateUser(
+		newUser, err := h.usersUC.Create(
 			r.Context(),
-			mapModel(user),
+			&models.UserCreate{
+				Name:     user.Name,
+				Email:    user.Email,
+				Password: user.Password,
+			},
 			user.ConfirmPassword,
 		)
 		if err != nil {
@@ -91,13 +94,13 @@ func (h *userHandler) Create() func(w http.ResponseWriter, r *http.Request) {
 // @Router /user/{id} [get]
 func (h *userHandler) Get() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id, err := uuid.Parse(chi.URLParam(r, "id"))
+		id, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 64)
 		if err != nil {
 			render.Render(w, r, responses.CreateErrorResponse(httpErrors.ErrValidation(err))) //nolint:errcheck
 			return
 		}
 
-		user, err := h.usersUC.Get(r.Context(), id)
+		user, err := h.usersUC.Get(r.Context(), uint(uint(id)))
 		if err != nil {
 			render.Render(w, r, responses.CreateErrorResponse(err)) //nolint:errcheck
 			return
@@ -155,13 +158,13 @@ func (h *userHandler) GetMulti() func(w http.ResponseWriter, r *http.Request) {
 // @Router /user/{id} [delete]
 func (h *userHandler) Delete() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id, err := uuid.Parse(chi.URLParam(r, "id"))
+		id, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 64)
 		if err != nil {
 			render.Render(w, r, responses.CreateErrorResponse(httpErrors.ErrValidation(err))) //nolint:errcheck
 			return
 		}
 
-		user, err := h.usersUC.Delete(r.Context(), id)
+		user, err := h.usersUC.Delete(r.Context(), uint(id))
 		if err != nil {
 			render.Render(w, r, responses.CreateErrorResponse(err)) //nolint:errcheck
 			return
@@ -189,7 +192,7 @@ func (h *userHandler) Delete() func(w http.ResponseWriter, r *http.Request) {
 // @Router /user/{id} [put]
 func (h *userHandler) Update() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id, err := uuid.Parse(chi.URLParam(r, "id"))
+		id, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 64)
 		if err != nil {
 			render.Render(w, r, responses.CreateErrorResponse(httpErrors.ErrValidation(err))) //nolint:errcheck
 			return
@@ -209,12 +212,9 @@ func (h *userHandler) Update() func(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		values := make(map[string]interface{})
-		if user.Name != "" {
-			values["name"] = user.Name
-		}
-
-		updatedUser, err := h.usersUC.Update(r.Context(), id, values)
+		updatedUser, err := h.usersUC.Update(r.Context(), uint(id), &models.UserUpdate{
+			Name: &user.Name,
+		})
 		if err != nil {
 			render.Render(w, r, responses.CreateErrorResponse(err)) //nolint:errcheck
 			return
@@ -242,7 +242,7 @@ func (h *userHandler) Update() func(w http.ResponseWriter, r *http.Request) {
 // @Router /user/{id}/updatepass [patch]
 func (h *userHandler) UpdatePassword() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id, err := uuid.Parse(chi.URLParam(r, "id"))
+		id, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 64)
 		if err != nil {
 			render.Render(w, r, responses.CreateErrorResponse(httpErrors.ErrValidation(err))) //nolint:errcheck
 			return
@@ -264,7 +264,7 @@ func (h *userHandler) UpdatePassword() func(w http.ResponseWriter, r *http.Reque
 
 		updatedUser, err := h.usersUC.UpdatePassword(
 			r.Context(),
-			id,
+			uint(id),
 			user.OldPassword,
 			user.NewPassword,
 			user.ConfirmPassword,
@@ -345,12 +345,9 @@ func (h *userHandler) UpdateMe() func(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		values := make(map[string]interface{})
-		if userUpdate.Name != "" {
-			values["name"] = userUpdate.Name
-		}
-
-		updatedUser, err := h.usersUC.Update(r.Context(), user.Id, values)
+		updatedUser, err := h.usersUC.Update(r.Context(), user.Id, &models.UserUpdate{
+			Name: &userUpdate.Name,
+		})
 		if err != nil {
 			render.Render(w, r, responses.CreateErrorResponse(err)) //nolint:errcheck
 			return
@@ -434,27 +431,17 @@ func (h *userHandler) LogoutAllAdmin() func(w http.ResponseWriter, r *http.Reque
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		id, err := uuid.Parse(chi.URLParam(r, "id"))
+		id, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 64)
 		if err != nil {
 			render.Render(w, r, responses.CreateErrorResponse(httpErrors.ErrValidation(err))) //nolint:errcheck
 			return
 		}
 
-		err = h.usersUC.LogoutAll(ctx, id)
+		err = h.usersUC.LogoutAllWithId(ctx, uint(id))
 		if err != nil {
 			render.Render(w, r, responses.CreateErrorResponse(err)) //nolint:errcheck
 			return
 		}
-	}
-}
-
-func mapModel(exp *presenter.UserCreate) *models.User {
-	return &models.User{
-		Name:        exp.Name,
-		Email:       exp.Email,
-		Password:    exp.Password,
-		IsActive:    true,
-		IsSuperUser: false,
 	}
 }
 
@@ -463,8 +450,8 @@ func mapModelResponse(exp *models.User) *presenter.UserResponse {
 		Id:          exp.Id,
 		Name:        exp.Name,
 		Email:       exp.Email,
-		CreatedAt:   exp.CreatedAt,
-		UpdatedAt:   exp.UpdatedAt,
+		CreateTime:  exp.CreateTime,
+		UpdateTime:  exp.UpdateTime,
 		IsActive:    exp.IsActive,
 		IsSuperUser: exp.IsSuperUser,
 		Verified:    exp.Verified,

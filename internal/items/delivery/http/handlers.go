@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
-	"github.com/google/uuid"
 	"github.com/hiennguyen9874/go-boilerplate-v2/config"
 	"github.com/hiennguyen9874/go-boilerplate-v2/internal/items"
 	"github.com/hiennguyen9874/go-boilerplate-v2/internal/items/presenter"
@@ -21,11 +20,11 @@ import (
 
 type itemHandler struct {
 	cfg     *config.Config
-	itemsUC items.ItemUseCaseI
+	itemsUC items.ItemUseCase
 	logger  logger.Logger
 }
 
-func CreateItemHandler(uc items.ItemUseCaseI, cfg *config.Config, logger logger.Logger) items.Handlers {
+func CreateItemHandler(uc items.ItemUseCase, cfg *config.Config, logger logger.Logger) items.Handlers {
 	return &itemHandler{cfg: cfg, itemsUC: uc, logger: logger}
 }
 
@@ -69,7 +68,10 @@ func (h *itemHandler) Create() func(w http.ResponseWriter, r *http.Request) {
 		newItem, err := h.itemsUC.CreateWithOwner(
 			ctx,
 			user.Id,
-			mapModel(item),
+			&models.ItemCreate{
+				Title:       item.Title,
+				Description: item.Description,
+			},
 		)
 		if err != nil {
 			render.Render(w, r, responses.CreateErrorResponse(err)) //nolint:errcheck
@@ -100,7 +102,7 @@ func (h *itemHandler) Get() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		id, err := uuid.Parse(chi.URLParam(r, "id"))
+		id, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 64)
 		if err != nil {
 			render.Render(w, r, responses.CreateErrorResponse(httpErrors.ErrValidation(err))) //nolint:errcheck
 			return
@@ -112,7 +114,7 @@ func (h *itemHandler) Get() func(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		item, err := h.itemsUC.Get(ctx, id)
+		item, err := h.itemsUC.Get(ctx, uint(id))
 		if err != nil {
 			render.Render(w, r, responses.CreateErrorResponse(err)) //nolint:errcheck
 			return
@@ -189,7 +191,7 @@ func (h *itemHandler) Delete() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		id, err := uuid.Parse(chi.URLParam(r, "id"))
+		id, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 64)
 		if err != nil {
 			render.Render(w, r, responses.CreateErrorResponse(httpErrors.ErrValidation(err))) //nolint:errcheck
 			return
@@ -201,7 +203,7 @@ func (h *itemHandler) Delete() func(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		item, err := h.itemsUC.Get(ctx, id)
+		item, err := h.itemsUC.Get(ctx, uint(id))
 		if err != nil {
 			render.Render(w, r, responses.CreateErrorResponse(err)) //nolint:errcheck
 			return
@@ -212,7 +214,7 @@ func (h *itemHandler) Delete() func(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		err = h.itemsUC.DeleteWithoutGet(ctx, id)
+		err = h.itemsUC.DeleteWithoutGet(ctx, uint(id))
 		if err != nil {
 			render.Render(w, r, responses.CreateErrorResponse(err)) //nolint:errcheck
 			return
@@ -242,7 +244,7 @@ func (h *itemHandler) Update() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		id, err := uuid.Parse(chi.URLParam(r, "id"))
+		id, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 64)
 		if err != nil {
 			render.Render(w, r, responses.CreateErrorResponse(httpErrors.ErrValidation(err))) //nolint:errcheck
 			return
@@ -268,7 +270,7 @@ func (h *itemHandler) Update() func(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		dbItem, err := h.itemsUC.Get(ctx, id)
+		dbItem, err := h.itemsUC.Get(ctx, uint(id))
 		if err != nil {
 			render.Render(w, r, responses.CreateErrorResponse(err)) //nolint:errcheck
 			return
@@ -279,28 +281,28 @@ func (h *itemHandler) Update() func(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		values := make(map[string]interface{})
+		// values := make(map[string]interface{})
+		// if item.Title != "" {
+		// 	values["title"] = item.Title
+		// }
+		// if item.Description != "" {
+		// 	values["description"] = item.Description
+		// }
+		item_update := models.ItemUpdate{}
 		if item.Title != "" {
-			values["title"] = item.Title
+			item_update.Title = &item.Title
 		}
 		if item.Description != "" {
-			values["description"] = item.Description
+			item_update.Description = &item.Description
 		}
 
-		updatedItem, err := h.itemsUC.Update(r.Context(), id, values)
+		updatedItem, err := h.itemsUC.Update(r.Context(), uint(id), &item_update)
 		if err != nil {
 			render.Render(w, r, responses.CreateErrorResponse(err)) //nolint:errcheck
 			return
 		}
 
 		render.Respond(w, r, responses.CreateSuccessResponse(mapModelResponse(updatedItem)))
-	}
-}
-
-func mapModel(exp *presenter.ItemCreate) *models.Item {
-	return &models.Item{
-		Title:       exp.Title,
-		Description: exp.Description,
 	}
 }
 

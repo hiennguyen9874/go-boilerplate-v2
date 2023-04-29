@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/go-chi/render"
-	"github.com/google/uuid"
 	"github.com/hiennguyen9874/go-boilerplate-v2/internal/models"
 	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/httpErrors"
 	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/jwt"
@@ -109,13 +109,13 @@ func (mw *MiddlewareManager) CurrentUser() func(http.Handler) http.Handler {
 				return
 			}
 
-			idParsed, err := uuid.Parse(id)
+			idParsed, err := strconv.ParseUint(id, 10, 64)
 			if err != nil {
 				render.Render(w, r, responses.CreateErrorResponse(httpErrors.ErrInvalidJWTClaims(errors.New("can not convert id to uuid from id in token")))) //nolint:errcheck
 				return
 			}
 
-			user, err := mw.usersUC.Get(ctx, idParsed)
+			user, err := mw.usersUC.Get(ctx, uint(idParsed))
 			if err != nil {
 				render.Render(w, r, responses.CreateErrorResponse(err)) //nolint:errcheck
 				return
@@ -139,7 +139,7 @@ func (mw *MiddlewareManager) SuperUser() func(http.Handler) http.Handler {
 				return
 			}
 
-			if !mw.usersUC.IsSuper(ctx, *user) {
+			if !user.IsSuperUser {
 				render.Render(w, r, responses.CreateErrorResponse(httpErrors.ErrNotEnoughPrivileges(errors.New("user is not super user")))) //nolint:errcheck
 				return
 			}
@@ -160,7 +160,7 @@ func (mw *MiddlewareManager) ActiveUser() func(http.Handler) http.Handler {
 				return
 			}
 
-			if !mw.usersUC.IsActive(ctx, *user) {
+			if !user.IsActive {
 				render.Render(w, r, responses.CreateErrorResponse(httpErrors.ErrInactiveUser(errors.New("user inactive")))) //nolint:errcheck
 				return
 			}

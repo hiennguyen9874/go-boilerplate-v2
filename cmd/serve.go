@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"context"
+
 	"github.com/hiennguyen9874/go-boilerplate-v2/config"
 	"github.com/hiennguyen9874/go-boilerplate-v2/internal/distributor"
 	"github.com/hiennguyen9874/go-boilerplate-v2/internal/server"
@@ -16,13 +18,15 @@ var serveCmd = &cobra.Command{
 	Short: "start http server with configured api",
 	Long:  `Starts a http server and serves the configured api`,
 	Run: func(cmd *cobra.Command, args []string) {
+		ctx := context.Background()
+
 		cfg := config.GetCfg()
 
 		appLogger := logger.NewApiLogger(cfg)
 		appLogger.InitLogger()
 		appLogger.Infof("AppVersion: %s, LogLevel: %s, Mode: %s", cfg.Server.AppVersion, cfg.Logger.Level, cfg.Server.Mode)
 
-		psqlDB, err := postgres.NewPsqlDB(cfg)
+		psqlClient, err := postgres.NewPsqlClient(cfg)
 		if err != nil {
 			appLogger.Fatalf("Postgresql init: %s", err)
 		} else {
@@ -30,10 +34,10 @@ var serveCmd = &cobra.Command{
 		}
 
 		if cfg.Server.MigrateOnStart {
-			err = Migrate(psqlDB)
+			err = Migrate(ctx, psqlClient)
 
 			if err != nil {
-				appLogger.Info("Can not migrate data")
+				appLogger.Info("Can not migrate data", err)
 			} else {
 				appLogger.Info("Data migrated")
 			}
@@ -43,7 +47,7 @@ var serveCmd = &cobra.Command{
 
 		taskRedisClient := distributor.NewRedisClient(cfg)
 
-		server, err := server.NewServer(cfg, psqlDB, redisClient, taskRedisClient, appLogger)
+		server, err := server.NewServer(cfg, psqlClient, redisClient, taskRedisClient, appLogger)
 		if err != nil {
 			appLogger.Fatal(err)
 		}

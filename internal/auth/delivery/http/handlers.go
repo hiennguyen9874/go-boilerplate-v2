@@ -19,11 +19,11 @@ import (
 
 type authHandler struct {
 	cfg     *config.Config
-	usersUC users.UserUseCaseI
+	usersUC users.UserUseCase
 	logger  logger.Logger
 }
 
-func CreateAuthHandler(uc users.UserUseCaseI, cfg *config.Config, logger logger.Logger) auth.Handlers {
+func CreateAuthHandler(uc users.UserUseCase, cfg *config.Config, logger logger.Logger) auth.Handlers {
 	return &authHandler{cfg: cfg, usersUC: uc, logger: logger}
 }
 
@@ -175,13 +175,7 @@ func (h *authHandler) LogoutAllToken() func(w http.ResponseWriter, r *http.Reque
 
 		refreshToken := middleware.TokenFromHeader(r)
 
-		id, err := h.usersUC.ParseIdFromRefreshToken(ctx, refreshToken)
-		if err != nil {
-			render.Render(w, r, responses.CreateErrorResponse(err)) //nolint:errcheck
-			return
-		}
-
-		err = h.usersUC.LogoutAll(ctx, id)
+		err := h.usersUC.LogoutAllWithToken(ctx, refreshToken)
 		if err != nil {
 			render.Render(w, r, responses.CreateErrorResponse(err)) //nolint:errcheck
 			return
