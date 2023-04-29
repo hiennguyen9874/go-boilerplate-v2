@@ -445,16 +445,6 @@ func (h *userHandler) LogoutAllAdmin() func(w http.ResponseWriter, r *http.Reque
 	}
 }
 
-func mapModel(exp *presenter.UserCreate) *models.User {
-	return &models.User{
-		Name:        exp.Name,
-		Email:       exp.Email,
-		Password:    exp.Password,
-		IsActive:    true,
-		IsSuperUser: false,
-	}
-}
-
 func mapModelResponse(exp *models.User) *presenter.UserResponse {
 	return &presenter.UserResponse{
 		Id:          exp.Id,

@@ -306,13 +306,6 @@ func (h *itemHandler) Update() func(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func mapModel(exp *presenter.ItemCreate) *models.Item {
-	return &models.Item{
-		Title:       exp.Title,
-		Description: exp.Description,
-	}
-}
-
 func mapModelResponse(exp *models.Item) *presenter.ItemResponse {
 	return &presenter.ItemResponse{
 		Id:          exp.Id,
