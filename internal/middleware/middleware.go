@@ -9,10 +9,10 @@ import (
 type MiddlewareManager struct {
 	cfg     *config.Config
 	logger  logger.Logger
-	usersUC users.UserUseCaseI
+	usersUC users.UserUseCase
 }
 
-func CreateMiddlewareManager(cfg *config.Config, logger logger.Logger, usersUC users.UserUseCaseI) *MiddlewareManager {
+func CreateMiddlewareManager(cfg *config.Config, logger logger.Logger, usersUC users.UserUseCase) *MiddlewareManager {
 	return &MiddlewareManager{
 		cfg:     cfg,
 		logger:  logger,

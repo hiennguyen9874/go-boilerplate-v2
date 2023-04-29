@@ -25,7 +25,7 @@ var initDataCmd = &cobra.Command{
 		appLogger.InitLogger()
 		appLogger.Infof("AppVersion: %s, LogLevel: %s, Mode: %s", cfg.Server.AppVersion, cfg.Logger.Level, cfg.Server.Mode)
 
-		psqlDB, err := postgres.NewPsqlDB(cfg)
+		psqlClient, err := postgres.NewPsqlClient(cfg)
 		if err != nil {
 			appLogger.Fatalf("Postgresql init: %s", err)
 		} else {
@@ -37,14 +37,14 @@ var initDataCmd = &cobra.Command{
 		taskRedisClient := distributor.NewRedisClient(cfg)
 
 		// Repository
-		userPgRepo := userRepository.CreateUserPgRepository(psqlDB)
+		userPgRepo := userRepository.CreateUserPgRepository(psqlClient)
 		userRedisRepo := userRepository.CreateUserRedisRepository(redisClient)
 
 		// Distributor
 		userRedisTaskDistributor := userDistributor.NewUserRedisTaskDistributor(taskRedisClient, cfg, appLogger)
 
 		// UseCase
-		userUC := userUseCase.CreateUserUseCaseI(userPgRepo, userRedisRepo, userRedisTaskDistributor, cfg, appLogger)
+		userUC := userUseCase.CreateUserUseCase(userPgRepo, userRedisRepo, userRedisTaskDistributor, cfg, appLogger)
 
 		// Create super user if not exists
 		isCreated, _ := userUC.CreateSuperUserIfNotExist(context.Background())

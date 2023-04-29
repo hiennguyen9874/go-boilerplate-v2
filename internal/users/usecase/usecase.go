@@ -4,14 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 	"github.com/hiennguyen9874/go-boilerplate-v2/config"
 	"github.com/hiennguyen9874/go-boilerplate-v2/internal/models"
-	"github.com/hiennguyen9874/go-boilerplate-v2/internal/usecase"
 	"github.com/hiennguyen9874/go-boilerplate-v2/internal/users"
 	"github.com/hiennguyen9874/go-boilerplate-v2/internal/worker"
 	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/cryptpass"
@@ -19,105 +18,51 @@ import (
 	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/httpErrors"
 	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/jwt"
 	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/logger"
+	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/newPointer"
 	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/secureRandom"
 )
 
 type userUseCase struct {
-	usecase.UseCase[models.User]
 	pgRepo                 users.UserPgRepository
 	redisRepo              users.UserRedisRepository
 	emailTemplateGenerator emailTemplates.EmailTemplatesGenerator
 	redisTaskDistributor   users.UserRedisTaskDistributor
+	cfg                    *config.Config
+	logger                 logger.Logger
 }
 
-func CreateUserUseCaseI(
+func CreateUserUseCase(
 	pgRepo users.UserPgRepository,
 	redisRepo users.UserRedisRepository,
 	redisTaskDistributor users.UserRedisTaskDistributor,
 	cfg *config.Config,
 	logger logger.Logger,
-) users.UserUseCaseI {
+) users.UserUseCase {
 	return &userUseCase{
-		UseCase:                usecase.CreateUseCase[models.User](pgRepo, cfg, logger),
 		pgRepo:                 pgRepo,
 		redisRepo:              redisRepo,
 		emailTemplateGenerator: emailTemplates.NewEmailTemplatesGenerator(cfg),
 		redisTaskDistributor:   redisTaskDistributor,
+		cfg:                    cfg,
+		logger:                 logger,
 	}
 }
 
-func (u *userUseCase) Get(ctx context.Context, id uuid.UUID) (*models.User, error) {
-	cachedUser, err := u.redisRepo.Get(ctx, u.GenerateRedisUserKey(id))
+func (u *userUseCase) Create(ctx context.Context, obj_create *models.UserCreate, confirmPassword string) (*models.User, error) {
+	if obj_create.Password != confirmPassword {
+		return nil, httpErrors.ErrValidation(errors.New("password do not match"))
+	}
+
+	obj_create.Email = strings.ToLower(strings.TrimSpace(obj_create.Email))
+	obj_create.Password = strings.TrimSpace(obj_create.Password)
+
+	hashedPassword, err := cryptpass.HashPassword(obj_create.Password)
 	if err != nil {
 		return nil, err
 	}
+	obj_create.Password = hashedPassword
 
-	if cachedUser != nil {
-		return cachedUser, nil
-	}
-
-	user, err := u.pgRepo.Get(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = u.redisRepo.Create(ctx, u.GenerateRedisUserKey(id), user, 3600); err != nil {
-		return nil, err
-	}
-
-	return user, nil
-}
-
-func (u *userUseCase) Delete(ctx context.Context, id uuid.UUID) (*models.User, error) {
-	user, err := u.pgRepo.Delete(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = u.redisRepo.Delete(ctx, u.GenerateRedisUserKey(id)); err != nil {
-		return nil, err
-	}
-
-	if err = u.redisRepo.Delete(ctx, u.GenerateRedisRefreshTokenKey(id)); err != nil {
-		return nil, err
-	}
-
-	return user, nil
-}
-
-func (u *userUseCase) Update(
-	ctx context.Context,
-	id uuid.UUID,
-	values map[string]interface{},
-) (*models.User, error) {
-	obj, err := u.Get(ctx, id)
-	if err != nil || obj == nil {
-		return nil, err
-	}
-
-	user, err := u.pgRepo.Update(ctx, obj, values)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = u.redisRepo.Delete(ctx, u.GenerateRedisUserKey(id)); err != nil {
-		return nil, err
-	}
-
-	return user, nil
-}
-
-func (u *userUseCase) Create(ctx context.Context, exp *models.User) (*models.User, error) {
-	exp.Email = strings.ToLower(strings.TrimSpace(exp.Email))
-	exp.Password = strings.TrimSpace(exp.Password)
-
-	hashedPassword, err := cryptpass.HashPassword(exp.Password)
-	if err != nil {
-		return nil, err
-	}
-	exp.Password = hashedPassword
-
-	user, err := u.pgRepo.Create(ctx, exp)
+	user, err := u.pgRepo.Create(ctx, obj_create)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +77,7 @@ func (u *userUseCase) Create(ctx context.Context, exp *models.User) (*models.Use
 	}
 
 	// Update user in database
-	updatedUser, err := u.pgRepo.UpdateVerificationCode(ctx, user, verificationCode)
+	updatedUser, err := u.pgRepo.UpdateVerificationCode(ctx, user.Id, verificationCode)
 	if err != nil {
 		return nil, err
 	}
@@ -150,9 +95,9 @@ func (u *userUseCase) Create(ctx context.Context, exp *models.User) (*models.Use
 	}
 
 	err = u.redisTaskDistributor.DistributeTaskSendEmail(ctx, &users.PayloadSendEmail{
-		From:      u.Cfg.Email.From,
+		From:      u.cfg.Email.From,
 		To:        updatedUser.Email,
-		Subject:   u.Cfg.Email.VerificationSubject,
+		Subject:   u.cfg.Email.VerificationSubject,
 		BodyHtml:  bodyHtml,
 		BodyPlain: bodyPlain,
 	}, []asynq.Option{
@@ -167,31 +112,95 @@ func (u *userUseCase) Create(ctx context.Context, exp *models.User) (*models.Use
 	return updatedUser, nil
 }
 
-func (u *userUseCase) CreateUser(ctx context.Context, exp *models.User, confirmPassword string) (*models.User, error) {
-	if exp.Password != confirmPassword {
-		return nil, httpErrors.ErrValidation(errors.New("password do not match"))
+func (u *userUseCase) Get(ctx context.Context, id uint) (*models.User, error) {
+	cachedUser, err := u.redisRepo.Get(ctx, u.generateRedisUserKey(id))
+	if err != nil {
+		return nil, err
 	}
-	return u.Create(ctx, exp)
+
+	if cachedUser != nil {
+		return cachedUser, nil
+	}
+
+	user, err := u.pgRepo.Get(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = u.redisRepo.Create(ctx, u.generateRedisUserKey(id), user, 3600); err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
-func (u *userUseCase) createToken(ctx context.Context, exp models.User) (string, string, error) {
+func (u *userUseCase) GetMulti(ctx context.Context, offset, limit int) ([]*models.User, error) {
+	if offset < 0 {
+		offset = 0
+	}
+	if limit <= 0 {
+		limit = 50
+	}
+	return u.pgRepo.GetMulti(ctx, offset, limit)
+}
+
+func (u *userUseCase) Delete(ctx context.Context, id uint) (*models.User, error) {
+	user, err := u.pgRepo.Delete(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = u.redisRepo.Delete(ctx, u.generateRedisUserKey(id)); err != nil {
+		return nil, err
+	}
+
+	if err = u.redisRepo.Delete(ctx, u.GenerateRedisRefreshTokenKey(id)); err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (u *userUseCase) Update(
+	ctx context.Context,
+	id uint,
+	obj_update *models.UserUpdate,
+) (*models.User, error) {
+	obj, err := u.Get(ctx, id)
+	if err != nil || obj == nil {
+		return nil, err
+	}
+
+	user, err := u.pgRepo.Update(ctx, obj.Id, obj_update)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = u.redisRepo.Delete(ctx, u.generateRedisUserKey(id)); err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (u *userUseCase) createToken(ctx context.Context, obj models.User) (string, string, error) {
 	accessToken, err := jwt.CreateAccessTokenRS256(
-		exp.Id.String(),
-		exp.Email,
-		u.Cfg.Jwt.AccessTokenPrivateKey,
-		u.Cfg.Jwt.AccessTokenExpireDuration*int64(time.Minute),
-		u.Cfg.Jwt.Issuer,
+		strconv.FormatUint(uint64(obj.Id), 10),
+		obj.Email,
+		u.cfg.Jwt.AccessTokenPrivateKey,
+		u.cfg.Jwt.AccessTokenExpireDuration*int64(time.Minute),
+		u.cfg.Jwt.Issuer,
 	)
 	if err != nil {
 		return "", "", err
 	}
 
 	refreshToken, err := jwt.CreateAccessTokenRS256(
-		exp.Id.String(),
-		exp.Email,
-		u.Cfg.Jwt.RefreshTokenPrivateKey,
-		u.Cfg.Jwt.RefreshTokenExpireDuration*int64(time.Minute),
-		u.Cfg.Jwt.Issuer,
+		strconv.FormatUint(uint64(obj.Id), 10),
+		obj.Email,
+		u.cfg.Jwt.RefreshTokenPrivateKey,
+		u.cfg.Jwt.RefreshTokenExpireDuration*int64(time.Minute),
+		u.cfg.Jwt.Issuer,
 	)
 	if err != nil {
 		return "", "", err
@@ -226,26 +235,17 @@ func (u *userUseCase) SignIn(ctx context.Context, email string, password string)
 	return accessToken, refreshToken, nil
 }
 
-func (u *userUseCase) IsActive(ctx context.Context, exp models.User) bool {
-	return exp.IsActive
-}
-
-func (u *userUseCase) IsSuper(ctx context.Context, exp models.User) bool {
-	return exp.IsSuperUser
-}
-
 func (u *userUseCase) CreateSuperUserIfNotExist(ctx context.Context) (bool, error) {
-	user, err := u.pgRepo.GetByEmail(ctx, u.Cfg.FirstSuperUser.Email)
+	user, err := u.pgRepo.GetByEmail(ctx, u.cfg.FirstSuperUser.Email)
 
 	if err != nil || user == nil {
-		_, err := u.Create(ctx, &models.User{
-			Name:        u.Cfg.FirstSuperUser.Name,
-			Email:       u.Cfg.FirstSuperUser.Email,
-			Password:    u.Cfg.FirstSuperUser.Password,
-			IsActive:    true,
-			IsSuperUser: true,
-			Verified:    true,
-		})
+		_, err := u.Create(ctx, &models.UserCreate{
+			Name:        u.cfg.FirstSuperUser.Name,
+			Email:       u.cfg.FirstSuperUser.Email,
+			Password:    u.cfg.FirstSuperUser.Password,
+			IsActive:    newPointer.NewBoolean(true),
+			IsSuperUser: newPointer.NewBoolean(true),
+		}, u.cfg.FirstSuperUser.Password)
 		if err != nil {
 			return false, err
 		}
@@ -256,7 +256,7 @@ func (u *userUseCase) CreateSuperUserIfNotExist(ctx context.Context) (bool, erro
 
 func (u *userUseCase) UpdatePassword(
 	ctx context.Context,
-	id uuid.UUID,
+	id uint,
 	oldPassword string,
 	newPassword string,
 	confirmPassword string,
@@ -279,12 +279,12 @@ func (u *userUseCase) UpdatePassword(
 		return nil, err
 	}
 
-	updatedUser, err := u.pgRepo.UpdatePassword(ctx, user, hashedPassword)
+	updatedUser, err := u.pgRepo.UpdatePassword(ctx, user.Id, hashedPassword)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = u.redisRepo.Delete(ctx, u.GenerateRedisUserKey(id)); err != nil {
+	if err = u.redisRepo.Delete(ctx, u.generateRedisUserKey(id)); err != nil {
 		return nil, err
 	}
 
@@ -295,26 +295,26 @@ func (u *userUseCase) UpdatePassword(
 	return updatedUser, nil
 }
 
-func (u *userUseCase) ParseIdFromRefreshToken(
+func (u *userUseCase) parseIdFromRefreshToken(
 	ctx context.Context,
 	refreshToken string,
-) (uuid.UUID, error) {
-	id, _, err := jwt.ParseTokenRS256(refreshToken, u.Cfg.Jwt.RefreshTokenPublicKey)
+) (uint, error) {
+	id, _, err := jwt.ParseTokenRS256(refreshToken, u.cfg.Jwt.RefreshTokenPublicKey)
 	if err != nil {
-		return uuid.UUID{}, err
+		return 0, err
 	}
 
-	idParsed, err := uuid.Parse(id)
+	idParsed, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
-		return uuid.UUID{},
+		return 0,
 			httpErrors.ErrInvalidJWTClaims(errors.New("can not convert id to uuid from id in token"))
 	}
 
-	return idParsed, nil
+	return uint(idParsed), nil
 }
 
 func (u *userUseCase) Refresh(ctx context.Context, refreshToken string) (string, string, error) {
-	idParsed, err := u.ParseIdFromRefreshToken(ctx, refreshToken)
+	idParsed, err := u.parseIdFromRefreshToken(ctx, refreshToken)
 	if err != nil {
 		return "", "", err
 	}
@@ -363,7 +363,7 @@ func (u *userUseCase) Refresh(ctx context.Context, refreshToken string) (string,
 }
 
 func (u *userUseCase) Logout(ctx context.Context, refreshToken string) error {
-	idParsed, err := u.ParseIdFromRefreshToken(ctx, refreshToken)
+	idParsed, err := u.parseIdFromRefreshToken(ctx, refreshToken)
 	if err != nil {
 		return err
 	}
@@ -379,7 +379,20 @@ func (u *userUseCase) Logout(ctx context.Context, refreshToken string) error {
 	return nil
 }
 
-func (u *userUseCase) LogoutAll(ctx context.Context, id uuid.UUID) error {
+func (u *userUseCase) LogoutAllWithId(ctx context.Context, id uint) error {
+	if err := u.redisRepo.Delete(ctx, u.GenerateRedisRefreshTokenKey(id)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (u *userUseCase) LogoutAllWithToken(ctx context.Context, refreshToken string) error {
+	id, err := u.parseIdFromRefreshToken(ctx, refreshToken)
+	if err != nil {
+		return nil
+	}
+
 	if err := u.redisRepo.Delete(ctx, u.GenerateRedisRefreshTokenKey(id)); err != nil {
 		return err
 	}
@@ -397,12 +410,12 @@ func (u *userUseCase) Verify(ctx context.Context, verificationCode string) error
 		return httpErrors.ErrUserAlreadyVerified(errors.New("user already verified"))
 	}
 
-	updatedUser, err := u.pgRepo.UpdateVerification(ctx, user, "", true)
+	updatedUser, err := u.pgRepo.UpdateVerification(ctx, user.Id, "", true)
 	if err != nil {
 		return err
 	}
 
-	if err = u.redisRepo.Delete(ctx, u.GenerateRedisUserKey(updatedUser.Id)); err != nil {
+	if err = u.redisRepo.Delete(ctx, u.generateRedisUserKey(updatedUser.Id)); err != nil {
 		return err
 	}
 
@@ -427,14 +440,14 @@ func (u *userUseCase) ForgotPassword(ctx context.Context, email string) error {
 
 	updatedUser, err := u.pgRepo.UpdatePasswordReset(
 		ctx,
-		user,
+		user.Id,
 		resetToken,
 		time.Now().Add(time.Minute*15),
 	)
 	if err != nil {
 		return err
 	}
-	if err = u.redisRepo.Delete(ctx, u.GenerateRedisUserKey(updatedUser.Id)); err != nil {
+	if err = u.redisRepo.Delete(ctx, u.generateRedisUserKey(updatedUser.Id)); err != nil {
 		return err
 	}
 
@@ -448,9 +461,9 @@ func (u *userUseCase) ForgotPassword(ctx context.Context, email string) error {
 	}
 
 	err = u.redisTaskDistributor.DistributeTaskSendEmail(ctx, &users.PayloadSendEmail{
-		From:      u.Cfg.Email.From,
+		From:      u.cfg.Email.From,
 		To:        updatedUser.Email,
-		Subject:   u.Cfg.Email.ResetSubject,
+		Subject:   u.cfg.Email.ResetSubject,
 		BodyHtml:  bodyHtml,
 		BodyPlain: bodyPlain,
 	}, []asynq.Option{
@@ -487,7 +500,7 @@ func (u *userUseCase) ResetPassword(
 
 	updatedUser, err := u.pgRepo.UpdatePasswordResetToken(
 		ctx,
-		user,
+		user.Id,
 		hashedPassword,
 		"",
 	)
@@ -495,7 +508,7 @@ func (u *userUseCase) ResetPassword(
 		return err
 	}
 
-	if err = u.redisRepo.Delete(ctx, u.GenerateRedisUserKey(updatedUser.Id)); err != nil {
+	if err = u.redisRepo.Delete(ctx, u.generateRedisUserKey(updatedUser.Id)); err != nil {
 		return err
 	}
 
@@ -506,10 +519,10 @@ func (u *userUseCase) ResetPassword(
 	return nil
 }
 
-func (u *userUseCase) GenerateRedisUserKey(id uuid.UUID) string {
-	return fmt.Sprintf("%s:%s", models.User{}.TableName(), id.String())
+func (u *userUseCase) generateRedisUserKey(id uint) string {
+	return fmt.Sprintf("Cache:User:%v", id)
 }
 
-func (u *userUseCase) GenerateRedisRefreshTokenKey(id uuid.UUID) string {
-	return fmt.Sprintf("RefreshToken:%s", id.String())
+func (u *userUseCase) GenerateRedisRefreshTokenKey(id uint) string {
+	return fmt.Sprintf("RefreshToken:%v", id)
 }

@@ -3,25 +3,22 @@ package users
 import (
 	"context"
 
-	"github.com/google/uuid"
-	"github.com/hiennguyen9874/go-boilerplate-v2/internal"
 	"github.com/hiennguyen9874/go-boilerplate-v2/internal/models"
 )
 
-type UserUseCaseI interface {
-	internal.UseCaseI[models.User]
-	CreateUser(ctx context.Context, exp *models.User, confirmPassword string) (*models.User, error)
+type UserUseCase interface {
+	Create(ctx context.Context, obj_create *models.UserCreate, confirmPassword string) (*models.User, error)
+	Get(ctx context.Context, id uint) (*models.User, error)
+	GetMulti(ctx context.Context, offset, limit int) ([]*models.User, error)
+	Delete(ctx context.Context, id uint) (*models.User, error)
+	Update(ctx context.Context, id uint, obj_update *models.UserUpdate) (*models.User, error)
 	SignIn(ctx context.Context, email string, password string) (string, string, error)
-	IsActive(ctx context.Context, exp models.User) bool
-	IsSuper(ctx context.Context, exp models.User) bool
 	CreateSuperUserIfNotExist(context.Context) (bool, error)
-	UpdatePassword(ctx context.Context, id uuid.UUID, oldPassword string, newPassword string, confirmPassword string) (*models.User, error)
-	ParseIdFromRefreshToken(ctx context.Context, refreshToken string) (uuid.UUID, error)
+	UpdatePassword(ctx context.Context, id uint, oldPassword string, newPassword string, confirmPassword string) (*models.User, error)
 	Refresh(ctx context.Context, refreshToken string) (string, string, error)
-	GenerateRedisUserKey(id uuid.UUID) string
-	GenerateRedisRefreshTokenKey(id uuid.UUID) string
 	Logout(ctx context.Context, refreshToken string) error
-	LogoutAll(ctx context.Context, id uuid.UUID) error
+	LogoutAllWithId(ctx context.Context, id uint) error
+	LogoutAllWithToken(ctx context.Context, refreshToken string) error
 	Verify(ctx context.Context, verificationCode string) error
 	ForgotPassword(ctx context.Context, email string) error
 	ResetPassword(ctx context.Context, resetToken string, newPassword string, confirmPassword string) error

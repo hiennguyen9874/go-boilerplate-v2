@@ -11,9 +11,9 @@ import (
 
 	"github.com/hibiken/asynq"
 	"github.com/hiennguyen9874/go-boilerplate-v2/config"
+	"github.com/hiennguyen9874/go-boilerplate-v2/ent"
 	"github.com/hiennguyen9874/go-boilerplate-v2/pkg/logger"
 	"github.com/redis/go-redis/v9"
-	"gorm.io/gorm"
 )
 
 const (
@@ -25,15 +25,15 @@ const (
 type Server struct {
 	server *http.Server
 	cfg    *config.Config
-	db     *gorm.DB
+	client *ent.Client
 	logger logger.Logger
 }
 
 // NewServer creates and configures an APIServer serving all application routes.
-func NewServer(cfg *config.Config, db *gorm.DB, redisClient *redis.Client, taskRedisClient *asynq.Client, logger logger.Logger) (*Server, error) {
+func NewServer(cfg *config.Config, client *ent.Client, redisClient *redis.Client, taskRedisClient *asynq.Client, logger logger.Logger) (*Server, error) {
 	logger.Info("configuring server...")
 
-	api, err := New(db, redisClient, taskRedisClient, cfg, logger)
+	api, err := New(client, redisClient, taskRedisClient, cfg, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func NewServer(cfg *config.Config, db *gorm.DB, redisClient *redis.Client, taskR
 			MaxHeaderBytes: maxHeaderBytes,
 		},
 		cfg:    cfg,
-		db:     db,
+		client: client,
 		logger: logger,
 	}, nil
 }
