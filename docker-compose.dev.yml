@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
-    command: sh -c "wait-for-it -w db:5432 -w redis:6379 -- go run main.go migrate && go run main.go initdata && air -c .air.toml serve"
+    command: sh -c "wait-for-it -w db:5432 -w redis:6379 -- ./prestart.dev.sh && air -c .air.toml serve"
     ports:
       - ${SERVER_PORT}:${SERVER_PORT}
     volumes:
