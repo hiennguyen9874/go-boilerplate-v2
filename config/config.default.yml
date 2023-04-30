@@ -5,7 +5,6 @@ server:
   ProcessTimeout: 60
   ReadTimeout: 5
   WriteTimeout: 5
-  MigrateOnStart: true
 
 jwt:
   SecretKey: 9056b94a8611363c2c43aa3760d65a48c834744b877b5041fa99a919d5aaf635
