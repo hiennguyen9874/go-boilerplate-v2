@@ -33,7 +33,6 @@ type ServerConfig struct {
 	ProcessTimeout int
 	ReadTimeout    int
 	WriteTimeout   int
-	MigrateOnStart bool
 }
 
 type Logger struct {

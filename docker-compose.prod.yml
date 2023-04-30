@@ -6,7 +6,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.prod
-    command: sh -c "/go/wait-for-it -w db:5432 -w redis:6379 -- /app/go-boilerplate migrate && /app/go-boilerplate initdata && /app/go-boilerplate serve"
+    command: sh -c "/go/wait-for-it -w db:5432 -w redis:6379 -- ./prestart.prod.sh && /app/go-boilerplate serve"
     ports:
       - ${SERVER_PORT}:${SERVER_PORT}
     depends_on:

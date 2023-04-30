@@ -1,4 +1,12 @@
-FROM golang:1.20-alpine as builder
+FROM golang:1.20-alpine as base
+
+RUN apk add --update \
+    curl \
+    && rm -rf /var/cache/apk/*
+
+RUN curl -sSf https://atlasgo.sh | sh
+
+FROM base as builder
 
 ENV GO111MODULE=on CGO_ENABLED=0
 
@@ -13,12 +21,19 @@ COPY ./ .
 
 RUN go build -ldflags "-s -w" -o /app/go-boilerplate
 
-FROM golang:1.20-alpine as runtime
+FROM base as runtime
 
 WORKDIR /app
 
+COPY ./prestart.prod.sh .
+RUN chmod +X ./prestart.prod.sh
+
+# Binary file
 COPY --from=builder /app/go-boilerplate /app/go-boilerplate
 COPY --from=builder /go/bin/wait-for-it /go/wait-for-it
+
+# Migrations folder
+COPY --from=builder /app/ent/migrate/migrations /app/ent/migrate/migrations
 
 RUN mkdir config
 COPY ./config/config.default.yml /app/config/
